@@ -11,14 +11,13 @@ import (
 	"sync"
 
 	"github.com/chainguard-dev/admission-sidecar/pkg/proxy"
-	vwhreconciler "knative.dev/pkg/client/injection/kube/reconciler/admissionregistration/v1/validatingwebhookconfiguration"
 
 	admissionv1 "k8s.io/api/admission/v1"
 	v1 "k8s.io/api/admissionregistration/v1"
 	admissionlisters "k8s.io/client-go/listers/admissionregistration/v1"
 	"knative.dev/pkg/apis"
+	"knative.dev/pkg/controller"
 	"knative.dev/pkg/logging"
-	"knative.dev/pkg/reconciler"
 	"knative.dev/pkg/webhook"
 )
 
@@ -26,34 +25,35 @@ const admitPrefix = "/admit/"
 
 // Reconciler implements the meta AdmissionController
 type Reconciler struct {
+	webhook.StatelessAdmissionImpl
 	vwhlister admissionlisters.ValidatingWebhookConfigurationLister
 
 	m         sync.Mutex
 	delegates map[string]*proxy.Delegate
 }
 
-var _ vwhreconciler.Interface = (*Reconciler)(nil)
+var _ controller.Reconciler = (*Reconciler)(nil)
 var _ webhook.AdmissionController = (*Reconciler)(nil)
 
-// Reconcile implements controller.Reconciler
-func (r *Reconciler) ReconcileKind(ctx context.Context, vwh *v1.ValidatingWebhookConfiguration) reconciler.Event {
+// Reconcile adds Client information to our map for each of the
+// ValidatingWebhookConfiguration so that the Admit can call them
+// as necessary.
+func (r *Reconciler) Reconcile(ctx context.Context, key string) error {
+	vwh, err := r.vwhlister.Get(key)
+	if err != nil {
+		return err
+	}
 	// Ensure our map reflects any updates
 	for i := range vwh.Webhooks {
-		if err := r.addDelegate(vwh.Webhooks[i].Name, vwh.Webhooks[i].ClientConfig); err != nil {
+		if err := r.addDelegate(ctx, vwh.Webhooks[i].Name, vwh.Webhooks[i].ClientConfig); err != nil {
 			logging.FromContext(ctx).Errorf("Failed to add delegate: %s", err)
 			return err
 		}
 	}
-
-	r.m.Lock()
-	defer r.m.Unlock()
-	for k, v := range r.delegates {
-		logging.FromContext(ctx).Infof("Have %s => %+v", k, v)
-	}
 	return nil
 }
 
-func (r *Reconciler) addDelegate(name string, clientConfig v1.WebhookClientConfig) error {
+func (r *Reconciler) addDelegate(ctx context.Context, name string, clientConfig v1.WebhookClientConfig) error {
 	r.m.Lock()
 	defer r.m.Unlock()
 	delegate, err := proxy.WebhookClientConfigToURLAndCert(clientConfig)
@@ -61,6 +61,11 @@ func (r *Reconciler) addDelegate(name string, clientConfig v1.WebhookClientConfi
 		return err
 	}
 	r.delegates[name] = delegate
+	if clientConfig.Service != nil {
+		logging.FromContext(ctx).Infof("Added %s => Service: %+v", name, clientConfig.Service)
+	} else {
+		logging.FromContext(ctx).Infof("Added %s => URL: %s", name, *clientConfig.URL)
+	}
 	return nil
 }
 
@@ -86,5 +91,7 @@ func (r *Reconciler) Admit(ctx context.Context, request *admissionv1.AdmissionRe
 		logging.FromContext(ctx).Errorf("No handler found for %s %s", req.URL.Path, hook)
 		return proxy.CreateFailResponse(request.UID, fmt.Sprintf("No handler found for %s %s", req.URL.Path, hook))
 	}
-	return proxy.DoRequest(ctx, *delegate, request.UID, req.Body)
+	logging.FromContext(ctx).Errorf("Doing a proxy request to delegate %s : %s", hook, delegate.Service)
+	//return proxy.DoRequest(ctx, *delegate, request.UID, req.Body)
+	return proxy.DoRequest(ctx, *delegate, request)
 }

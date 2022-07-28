@@ -1,17 +1,6 @@
 # Copyright 2022 Chainguard, Inc.
 # SPDX-License-Identifier: Apache-2.0
 
-apiVersion: policy/v1
-kind: PodDisruptionBudget
-metadata:
-  name: admission-sidecar
-  namespace: admission-sidecar
-spec:
-  minAvailable: 1
-  selector:
-    matchLabels:
-      app: admission-sidecar
----
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -29,17 +18,6 @@ spec:
       labels:
         app: admission-sidecar
     spec:
-      # To avoid node becoming SPOF, spread our replicas to different nodes.
-      affinity:
-        podAntiAffinity:
-          preferredDuringSchedulingIgnoredDuringExecution:
-          - podAffinityTerm:
-              labelSelector:
-                matchLabels:
-                  app: admission-sidecar
-              topologyKey: kubernetes.io/hostname
-            weight: 100
-
       serviceAccountName: admission-sidecar
       containers:
       - name: controller
@@ -53,12 +31,12 @@ spec:
             memory: 1000Mi
         ports:
         - name: http-webhook
-          containerPort: 8443
+          containerPort: 8088
         readinessProbe:
           periodSeconds: 1
           httpGet:
             scheme: HTTP
-            port: 8443
+            port: 8088
             httpHeaders:
             - name: k-kubelet-probe
               value: "admission-sidecar"
@@ -67,7 +45,7 @@ spec:
           failureThreshold: 50
           httpGet:
             scheme: HTTP
-            port: 8443
+            port: 8088
             httpHeaders:
             - name: k-kubelet-probe
               value: "admission-sidecar"
@@ -86,6 +64,8 @@ spec:
           value: config-observability
         - name: METRICS_DOMAIN
           value: chainguard.dev/admission-sidecar
+        - name: PROXY_PORT
+          value: "8088"
         securityContext:
           allowPrivilegeEscalation: false
           readOnlyRootFilesystem: true

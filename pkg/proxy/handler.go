@@ -6,6 +6,7 @@ SPDX-License-Identifier: Apache-2.0
 package proxy
 
 import (
+	"bytes"
 	"context"
 	"crypto/tls"
 	"crypto/x509"
@@ -88,42 +89,49 @@ func GetHookName(ctx context.Context, prefix string, uid typesv1.UID, req *http.
 
 // DoRequest will make the call to the real webhook.
 // body is closed.
-func DoRequest(ctx context.Context, delegate Delegate, uid typesv1.UID, body io.ReadCloser) *admissionv1.AdmissionResponse {
+func DoRequest(ctx context.Context, delegate Delegate, request *admissionv1.AdmissionRequest) *admissionv1.AdmissionResponse {
+	reviewRequest := &admissionv1.AdmissionReview{Request: request}
+	body, err := json.Marshal(reviewRequest)
+	if err != nil {
+		return CreateFailResponse(request.UID, fmt.Sprintf("failed to marshal outgoing AdmissionReview: %s", err))
+	}
 	// Note it's fine if delegate.CACertPool is nil because that just means
 	// we use container root CA.
-	transCfg := &http.Transport{
-		TLSClientConfig: &tls.Config{RootCAs: delegate.CACertPool},
+	client := &http.Client{
+		Transport: &http.Transport{
+			TLSClientConfig: &tls.Config{RootCAs: delegate.CACertPool},
+		},
 	}
-	client := &http.Client{Transport: transCfg}
 
-	proxyReq, err := http.NewRequest("POST", delegate.Service, body)
+	proxyReq, err := http.NewRequest(http.MethodPost, delegate.Service, bytes.NewBuffer(body))
 	proxyReq.Header.Set("Content-Type", "application/json")
 	if err != nil {
 		logging.FromContext(ctx).Errorf("Failed to create request: %s", err)
-		return CreateFailResponse(uid, fmt.Sprintf("Failed to post %s", err))
+		return CreateFailResponse(request.UID, fmt.Sprintf("Failed to post %s", err))
 	}
 	proxyResp, err := client.Do(proxyReq)
 	if err != nil {
 		logging.FromContext(ctx).Errorf("Failed to post: %s", err)
-		return CreateFailResponse(uid, fmt.Sprintf("Failed to post %s", err))
+		return CreateFailResponse(request.UID, fmt.Sprintf("Failed to post %s", err))
 	}
 	if proxyResp == nil {
 		logging.FromContext(ctx).Error("Nil response from proxy")
-		return CreateFailResponse(uid, "Nil response from proxy")
+		return CreateFailResponse(request.UID, "Nil response from proxy")
 	}
 	defer proxyResp.Body.Close()
 
 	b, err := io.ReadAll(proxyResp.Body)
 	if err != nil {
 		logging.FromContext(ctx).Errorf("Failed to read body of response: %s", err)
-		return CreateFailResponse(uid, fmt.Sprintf("Failed to read body of response: %s", err))
+		return CreateFailResponse(request.UID, fmt.Sprintf("Failed to read body of response: %s", err))
 	}
 
-	ret := &admissionv1.AdmissionResponse{}
+	ret := &admissionv1.AdmissionReview{}
 	err = json.Unmarshal(b, ret)
 	if err != nil {
-		logging.FromContext(ctx).Errorf("Failed to unmarshal response: %s", err)
-		return CreateFailResponse(uid, fmt.Sprintf("Failed to unmarshal body of response: %s", err))
+		logging.FromContext(ctx).Errorf("Failed to unmarshal response: %s\n%s", err, b)
+		return CreateFailResponse(request.UID, fmt.Sprintf("Failed to unmarshal body of response: %s", err))
 	}
-	return ret
+	logging.FromContext(ctx).Errorf("Got back: %s", b)
+	return ret.Response
 }
