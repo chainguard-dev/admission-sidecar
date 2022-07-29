@@ -1,3 +1,6 @@
+# Copyright 2022 Chainguard, Inc.
+# SPDX-License-Identifier: Apache-2.0
+
 kind: ClusterRole
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
@@ -9,17 +12,4 @@ rules:
 
   - apiGroups: ["admissionregistration.k8s.io"]
     resources: ["validatingwebhookconfigurations", "mutatingwebhookconfigurations"]
-    verbs: ["list", "watch"]
-
-  # Allow the reconciliation of exactly our validating and mutating webhooks.
-  - apiGroups: ["admissionregistration.k8s.io"]
-    resources: ["validatingwebhookconfigurations", "mutatingwebhookconfigurations"]
-    verbs: ["get", "update"]
-    resourceNames: ["mutation.admission-sidecar.chainguard.dev", "validation.admission-sidecar.chainguard.dev"]
-
-  # The webhook configured the namespace as the OwnerRef on various cluster-scoped resources,
-  # which requires we can Get the system namespace.
-  - apiGroups: [""]
-    resources: ["namespaces"]
-    verbs: ["get"]
-    resourceNames: ["admission-sidecar"]
+    verbs: ["list", "get", "watch"]

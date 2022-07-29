@@ -19,7 +19,7 @@ import (
 )
 
 type EnvConfig struct {
-	Port int `envconfig:"PROXY_PORT" default:"8080"`
+	Port int `envconfig:"PROXY_PORT" default:"8088"`
 }
 
 func main() {
