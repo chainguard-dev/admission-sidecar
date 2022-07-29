@@ -104,11 +104,11 @@ func DoRequest(ctx context.Context, delegate Delegate, request *admissionv1.Admi
 	}
 
 	proxyReq, err := http.NewRequest(http.MethodPost, delegate.Service, bytes.NewBuffer(body))
-	proxyReq.Header.Set("Content-Type", "application/json")
 	if err != nil {
 		logging.FromContext(ctx).Errorf("Failed to create request: %s", err)
 		return CreateFailResponse(request.UID, fmt.Sprintf("Failed to post %s", err))
 	}
+	proxyReq.Header.Set("Content-Type", "application/json")
 	proxyResp, err := client.Do(proxyReq)
 	if err != nil {
 		logging.FromContext(ctx).Errorf("Failed to post: %s", err)
