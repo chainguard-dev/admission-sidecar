@@ -1,0 +1,84 @@
+# Copyright 2022 Chainguard, Inc.
+# SPDX-License-Identifier: Apache-2.0
+
+name: Test proxy requests through the admission sidecar
+
+on:
+  pull_request:
+    branches: [ 'main' ]
+
+defaults:
+  run:
+    shell: bash
+
+permissions: read-all
+
+jobs:
+  e2e:
+    name: Proxy e2e test
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        k8s-version:
+        - v1.24.x
+
+    env:
+      KNATIVE_VERSION: "1.5.0"
+      POLICY_CONTROLLER_VERSION: "v0.2.0"
+      KO_DOCKER_REPO: "registry.local:5000/proxy"
+      GO111MODULE: on
+      GOFLAGS: -ldflags=-s -ldflags=-w
+      KOCACHE: ~/ko
+      COSIGN_EXPERIMENTAL: true
+
+    steps:
+    - uses: actions/checkout@2541b1294d2704b0964813337f33b291d3f8596b # v2.4.0
+    - uses: actions/setup-go@84cbf8094393cdc5fe1fe1671ff2647332956b1a # v2.2.0
+      with:
+        go-version: '1.17'
+        check-latest: true
+
+    # will use the latest release available for ko
+    - uses: imjasonh/setup-ko@78eea08f10db87a7a23a666a4a6fe2734f2eeb8d # v0.4
+
+    - uses: imranismail/setup-kustomize@8fa954828ed3cfa7a487a2ba9f7104899bb48b2f # v1.6.1
+
+    - name: Install yq
+      uses: mikefarah/yq@c2c48bbe1d7a0e30293c2428a2dfc44298ffeeaf # v4.25.3
+
+    - name: Setup mirror
+      uses: chainguard-dev/actions/setup-mirror@main
+      with:
+        mirror: mirror.gcr.io
+
+    - uses: chainguard-dev/actions/setup-kind@main
+      with:
+        k8s-version: 1.24.x
+
+    - name: Create k8s Kind Cluster
+      uses: helm/kind-action@v1.3.0
+
+    - name: Install policy-controller
+      run: |
+        kubectl apply -f https://github.com/sigstore/policy-controller/releases/download/${{ env.POLICY_CONTROLLER_VERSION }}/policy-controller-${{ env.POLICY_CONTROLLER_VERSION }}.yaml
+
+    - name: Install proxy
+      run: |
+        ko apply -BRf ./config/
+        sleep 10
+
+    - name: Set up port-forward
+      run: |
+        pod=$(kubectl -n admission-sidecar get pods -oname)
+        kubectl -n admission-sidecar port-forward ${{ pod }} 8088:8088 &
+        sleep 5
+
+    - name: Run Cluster Image Policy Tests
+      timeout-minutes: 10
+      run: |
+        ./test/e2e_test.sh
+
+    - name: Collect diagnostics
+      if: ${{ failure() }}
+      uses: chainguard-dev/actions/kind-diag@84c993eaf02da1c325854fb272a4df9184bd80fc # main
