@@ -34,10 +34,6 @@ func main() {
 		Port:        ec.Port,
 	})
 	cfg := injection.ParseAndGetRESTConfigOrDie()
-
-	// Increase our client-side rate limits.
-	cfg.QPS = 100 * cfg.QPS
-	cfg.Burst = 100 * cfg.Burst
 	ctx = sharedmain.WithHADisabled(ctx)
 
 	logging.FromContext(ctx).Infof("Starting to listen on %d", ec.Port)

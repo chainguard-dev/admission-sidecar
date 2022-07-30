@@ -43,3 +43,7 @@ we might need a two level naming scheme in the above, something like:
 ```
 http://localhost:8443/admit/<validatingwebhookconfiguration name>/<webhookname>
 ```
+
+However, empirical evidence suggests that you can't (at least on GKE that I'm
+running) have multiple webhooks even though it accepts multiple, it only keeps
+one.
