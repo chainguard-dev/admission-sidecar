@@ -70,7 +70,7 @@ jobs:
       run: |
         POD=`kubectl -n chainguard-proxy get pods -oname`
         kubectl -n chainguard-proxy port-forward $POD 8088:8088 &
-        # Just give proxy little time to start.
+        # Just give port forward little time to start.
         sleep 5
 
     - name: Run Proxy E2E Tests
