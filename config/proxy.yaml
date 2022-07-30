@@ -4,21 +4,21 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: admission-sidecar
-  namespace: admission-sidecar
+  name: proxy
+  namespace: chainguard-proxy
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: admission-sidecar
+      app: chainguard-proxy
   template:
     metadata:
       annotations:
         cluster-autoscaler.kubernetes.io/safe-to-evict: "false"
       labels:
-        app: admission-sidecar
+        app: chainguard-proxy
     spec:
-      serviceAccountName: admission-sidecar
+      serviceAccountName: chainguard-proxy
       containers:
       - name: controller
         image: ko://github.com/chainguard-dev/admission-sidecar/cmd/
@@ -39,7 +39,7 @@ spec:
             port: 8088
             httpHeaders:
             - name: k-kubelet-probe
-              value: "admission-sidecar"
+              value: "chainguard-proxy"
         livenessProbe:
           periodSeconds: 1
           failureThreshold: 50
@@ -48,7 +48,7 @@ spec:
             port: 8088
             httpHeaders:
             - name: k-kubelet-probe
-              value: "admission-sidecar"
+              value: "chainguard-proxy"
         env:
         - name: SYSTEM_NAMESPACE
           valueFrom:

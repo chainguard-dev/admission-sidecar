@@ -13,7 +13,7 @@ sleep 5
 echo '::endgroup::'
 
 echo '::group:: Test fail with non-fully specified image'
-curl s -X POST "http://localhost:8088/admit/policy.sigstore.dev" -H "Content-Type: application/json" -d @./testdata/testrequest.json > ${OUTFILE}
+curl -s -X POST "http://localhost:8088/admit/policy.sigstore.dev" -H "Content-Type: application/json" -d @./testdata/testrequest.json > ${OUTFILE}
 if ! grep -q "nginx must be an image digest" ${OUTFILE} ; then
   echo Did not get expected failure message, got:
   cat ${OUTFILE}
@@ -22,7 +22,7 @@ fi
 echo '::endgroup::'
 
 echo '::group:: Test mutate with non-fully specified image'
-curl s -X POST "http://localhost:8088/mutate/policy.sigstore.dev" -H "Content-Type: application/json" -d @./testdata/testrequest.json > ${OUTFILE}
+curl -s -X POST "http://localhost:8088/mutate/policy.sigstore.dev" -H "Content-Type: application/json" -d @./testdata/testrequest.json > ${OUTFILE}
 if ! grep -q "JSONPatch" ${OUTFILE} ; then
   echo Did not get expected failure message, got:
   cat ${OUTFILE}
@@ -30,7 +30,7 @@ if ! grep -q "JSONPatch" ${OUTFILE} ; then
 fi
 
 echo '::group:: Test mutate with fully specified image'
-curl s -X POST "http://localhost:8088/mutate/policy.sigstore.dev" -H "Content-Type: application/json" -d @./testdata/testrequest.json > ${OUTFILE}
+curl -s -X POST "http://localhost:8088/admit/policy.sigstore.dev" -H "Content-Type: application/json" -d @./testdata/testrequest-full-image.json > ${OUTFILE}
 if ! grep -q "disallowed by static policy" ${OUTFILE} ; then
   echo Did not get expected failure message, got:
   cat ${OUTFILE}

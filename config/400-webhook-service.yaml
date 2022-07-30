@@ -5,13 +5,13 @@ apiVersion: v1
 kind: Service
 metadata:
   labels:
-    app: admission-sidecar
-  name: admission-sidecar
-  namespace: admission-sidecar
+    app: chainguard-proxy
+  name: proxy
+  namespace: chainguard-proxy
 spec:
   ports:
   - name: http-webhook
     port: 80
     targetPort: 8088
   selector:
-    app: admission-sidecar
+    app: chainguard-proxy

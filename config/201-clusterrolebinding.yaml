@@ -4,12 +4,12 @@
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
-  name: admission-sidecar
+  name: chainguard-proxy
 subjects:
   - kind: ServiceAccount
-    name: admission-sidecar
-    namespace: admission-sidecar
+    name: chainguard-proxy
+    namespace: chainguard-proxy
 roleRef:
   kind: ClusterRole
-  name: admission-sidecar-rbac
+  name: chainguard-proxy-rbac
   apiGroup: rbac.authorization.k8s.io
