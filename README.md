@@ -22,10 +22,9 @@ kubectl patch statefulset opa -n styra-system --type "json" -p '[{"op":"replace"
 ```
 package policy["com.styra.kubernetes.validating"].rules.rules
 enforce[decision] {
-  #title: vaikas-test-2
+  #title: chainguard-proxy
   input.request.kind.kind == "Pod"
-  admissionresponse := http.send({"raise_error": true, "url": "http://localhost:8443/admit/<webhook you want to hit>", "body": input, "method": "POST", "force_json_decode": true})
-  #admissionresponse := http.send({"raise_error": true, "url": "http://admission-sidecar.admission-sidecar.svc/admit", "body": input, "method": "POST", "force_json_decode": true})
+  admissionresponse := http.send({"raise_error": true, "url": "http://localhost:8088/admit/<webhook you want to hit>", "body": input, "method": "POST", "force_json_decode": true})
   response := json.unmarshal(admissionresponse.raw_body)
   msg := sprintf("Enforce Response: (%v)", [response.response])
   decision := {
@@ -41,7 +40,7 @@ Because validatingwebhookconfiguration has a name, and each webhook has a name,
 we might need a two level naming scheme in the above, something like:
 
 ```
-http://localhost:8443/admit/<validatingwebhookconfiguration name>/<webhookname>
+http://localhost:8088/admit/<validatingwebhookconfiguration name>/<webhookname>
 ```
 
 However, empirical evidence suggests that you can't (at least on GKE that I'm
