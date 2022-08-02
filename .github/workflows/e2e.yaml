@@ -73,10 +73,44 @@ jobs:
         # Just give port forward little time to start.
         sleep 5
 
-    - name: Run Proxy E2E Tests
-      timeout-minutes: 10
+    - name: Deploy CIPs
       run: |
-        ./test/e2e_test.sh
+        kubectl create -f ./testdata/cip-static-fail.yaml
+        kubectl create -f ./testdata/cip-static-pass.yaml
+        kubectl create -f ./testdata/cip-static-pass-fully-qualified.yaml
+        # Allow CIPs to propagate
+        sleep 5
+
+    - name: Create test namespaces and label them appropriately
+      run: |
+        kubectl create ns test-labeled-include
+        kubectl label namespace test-labeled-include proxy.chainguard.dev/include=true
+        kubectl create ns test-labeled-do-not-include
+        kubectl label namespace test-labeled-do-not-include proxy.chainguard.dev/include=false
+        kubectl create ns test-not-labeled
+
+    - name: Run Proxy E2E Tests
+      timeout-minutes: 5
+      run: |
+        go test -count=1 -v -race -tags=e2e ./test/e2e/... --require-label=true
+
+    - name: Then flip the enforcement label requirement to false
+      run: |
+        kubectl -n chainguard-proxy patch deployment proxy --type "json" -p '[{"op":"replace", "path":"/spec/template/spec/containers/0/env/0","value":{"name":"REQUIRE_LABEL","value":"false"}}]'
+        kubectl rollout status --timeout 2m --namespace chainguard-proxy deployments/proxy
+        sleep 10
+
+    - name: Set up port-forward to our new pod
+      run: |
+        POD=`kubectl -n chainguard-proxy get pods -oname`
+        kubectl -n chainguard-proxy port-forward $POD 8089:8088 &
+        # Just give port forward little time to start.
+        sleep 5
+
+    - name: Run Proxy E2E Tests
+      timeout-minutes: 5
+      run: |
+        go test -count=1 -v -race -tags=e2e ./test/e2e/... --url=http://localhost:8089 --require-label=false
 
     - name: Collect diagnostics
       if: ${{ failure() }}

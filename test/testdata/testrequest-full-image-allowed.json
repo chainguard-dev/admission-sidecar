@@ -9,7 +9,7 @@
             "version": "v1"
         },
         "name": "nginx",
-        "namespace": "default",
+        "namespace": "TEST_NAMESPACE_REPLACE_ME",
         "object": {
             "apiVersion": "v1",
             "kind": "Pod",
@@ -18,13 +18,13 @@
                     "run": "nginx"
                 },
                 "name": "nginx",
-                "namespace": "default",
+                "namespace": "TEST_NAMESPACE_REPLACE_ME",
                 "uid": "29a51cd1-069d-4213-af6b-4f63db857214"
             },
             "spec": {
                 "containers": [
                     {
-                        "image": "index.docker.io/library/nginx@sha256:1761fb5661e4d77e107427d8012ad3a5955007d997e0f4a3d41acc9ff20467c7",
+                        "image": "index.docker.io/library/nginx@sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
                         "imagePullPolicy": "Always",
                         "name": "nginx",
                         "resources": {},
@@ -132,14 +132,6 @@
         },
         "uid": "be650e63-c1fd-43b6-91cf-577930240b24",
         "userInfo": {
-            "extra": {
-                "iam.gke.io/user-assertion": [
-                    "AOFtdbocy5N6aTyl990bRiDpbV0RbZvagKAU+/OmHtPvlDjfHVYrxwXiumJ/cjs0TzP/Sc83N07FE7xo5CY7HUWP9FRKRcd0L5CDsA+2bgzle1JADD3+lNJdAhyO9RfvxM/Kgmo1+RRErwbiykFDL5sGI++NjWAa3qIILH8b4hgafcSQtPiUHW7iq9x971af1vPuRM6rOYeoNV0Fe14szldU7Map159a+hJrjp5O3MI2x85zLmKTREqMBlEF9asATojPS5CMPmqcuCYQmpwrlvWt+xL2OKO42PcyVxtu1+Xqz/sau5o61DHKyFWguKYcP2FlsJ4L485QViWH5MTV5T0fUB0TQ1lq+9v1ZMQxNxIDUw6RgLJOHIWP31J65o8qfRiYEU8Jek6z8bAQwWFPd3zP4bXvE7XFTUwCnT2hcf6zyq51hitpNNozbMniX4e4xvL/sPfoVPdUJXwdttn/9J5z+EzfX6GjCYcqK3viLoCAMjc4NBnIsl5GgjP9C1oQs7DBq/XqWmppeLzmNXCk+wAbXWQC9YdoJrXq4y9OEC7Ho+zeVkkdnnlykPGOTJ0zdAuP0SEXm7Vyyi9Rfd7GDmEMX/9PpPOMsVBNaC8p/bD9bVuPBtllghjIMdW0wOR9Bz4Nrg4w/d5wREcuS0BdYh+chiGrQqSKKXlSN4lP/jEv7qQMUpG3Ndm3Dzcy0bepjkI7XeJMb4qPASuSxsjy2VzkqWU+qAhmB6WGg4JcgfITYHqscUm16fUXNz1azpGOVKetoH2xA9Z04zbi9bJO4nWY0GUNcopm84iftf3/kKwxkYFpg0Onvq0/vgGYIpCUWNAepznVUaOo2+A1umtXcj/T2eq1OKoSq+Oasv5b6eR1eSnyWHxkqu0C7G4ftVMx3NORAjk5UyL8MpujsrXhqhXxfK7xWjH8oQDBjhjuaSoh1TAsMNMw0ruQFR6Pxa9FC+r7vzqw3hklHi4GeZVli5FGQWYD2BPThPBH8JW8ziKeWNT5EYAlRGza+izIUdOnzDuPOcdnS8bHbvnAnmXghGlhs91drFcuAwwJmcutJHgpIvIgv6pvH1ElpY0+k4PXLlxJLyiTImq7KeVDXC/sO00jzOfUxy9R73adfzeio5DoopQQtRVpzjL/obskA/wbF5SFYh48WXCyVNrofwBD1idpVEdocXn2aIhPIoVi4U5C6eKwYWkL9GOgnsXUg03Sge/DgDAqPZ0He0FiI5n5FPBfYSPlFKJTWQ=="
-                ],
-                "user-assertion.cloud.google.com": [
-                    "AOFtdbo8glPs6LsV4ikD0H8EA6W+7JZvDqC54O4gYihsL4WjUhZ0xcURz0ADP3NWqBW6kyUgBTad1CmcrejBwDWK8F2zOqAIDKRyvmoEtuyqI7LEYrF+v+kD7uebFl7MjKpwH2GnxG5pHc+vODXA+a9BSzUeMsdGXr3Bd3g3IZmPAdqa/e9x+7ZqfP3jpDEXz7HlYmhQZotdxdotzFX0eBgJqEcIx+z2QABY"
-                ]
-            },
             "groups": [
                 "system:authenticated"
             ],

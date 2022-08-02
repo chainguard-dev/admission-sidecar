@@ -8,6 +8,7 @@ package main
 import (
 	"fmt"
 
+	"github.com/chainguard-dev/admission-sidecar/pkg/filter"
 	"github.com/chainguard-dev/admission-sidecar/pkg/reconciler/mutating"
 	"github.com/chainguard-dev/admission-sidecar/pkg/reconciler/validating"
 	"github.com/kelseyhightower/envconfig"
@@ -19,7 +20,8 @@ import (
 )
 
 type EnvConfig struct {
-	Port int `envconfig:"PROXY_PORT" default:"8088"`
+	Port         int  `envconfig:"PROXY_PORT" default:"8088"`
+	RequireLabel bool `envconfig:"REQUIRE_LABEL" default:"false"`
 }
 
 func main() {
@@ -36,6 +38,8 @@ func main() {
 	cfg := injection.ParseAndGetRESTConfigOrDie()
 	ctx = sharedmain.WithHADisabled(ctx)
 
+	ctx = filter.WithRequireLabel(ctx, ec.RequireLabel)
+	logging.FromContext(ctx).Infof("Enforcing only on labeled namespaces: %v", ec.RequireLabel)
 	logging.FromContext(ctx).Infof("Starting to listen on %d", ec.Port)
 	sharedmain.MainWithConfig(ctx, "admission-sidecar", cfg,
 		//NewValidationAdmissionController,
