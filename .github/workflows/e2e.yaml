@@ -75,9 +75,9 @@ jobs:
 
     - name: Deploy CIPs
       run: |
-        kubectl create -f ./testdata/cip-static-fail.yaml
-        kubectl create -f ./testdata/cip-static-pass.yaml
-        kubectl create -f ./testdata/cip-static-pass-fully-qualified.yaml
+        kubectl create -f ./test/testdata/cip-static-fail.yaml
+        kubectl create -f ./test/testdata/cip-static-pass.yaml
+        kubectl create -f ./test/testdata/cip-static-pass-fully-qualified.yaml
         # Allow CIPs to propagate
         sleep 5
 
