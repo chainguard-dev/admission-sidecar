@@ -72,6 +72,9 @@ jobs:
         kubectl -n chainguard-proxy port-forward $POD 8088:8088 &
         # Just give port forward little time to start.
         sleep 5
+        # Make a note of this pod so we don't try to port forward to it again
+        # later.
+        echo "POD=$POD" >> $GITHUB_ENV
 
     - name: Deploy CIPs
       run: |
@@ -98,11 +101,14 @@ jobs:
       run: |
         kubectl -n chainguard-proxy patch deployment proxy --type "json" -p '[{"op":"replace", "path":"/spec/template/spec/containers/0/env/0","value":{"name":"REQUIRE_LABEL","value":"false"}}]'
         kubectl rollout status --timeout 2m --namespace chainguard-proxy deployments/proxy
-        sleep 10
+        sleep 5
 
     - name: Set up port-forward to our new pod
       run: |
-        POD=`kubectl -n chainguard-proxy get pods -oname`
+        # Note that despite the deployment having rolled out, there's still
+        # the old pod hanging around for a bit, so grep it out of here so
+        # that we don't try to port-forward to it again :)
+        POD=`kubectl -n chainguard-proxy get pods -oname | grep -v ${{ env.POD }}`
         kubectl -n chainguard-proxy port-forward $POD 8089:8088 &
         # Just give port forward little time to start.
         sleep 5
