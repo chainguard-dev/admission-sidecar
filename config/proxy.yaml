@@ -50,10 +50,14 @@ spec:
             - name: k-kubelet-probe
               value: "chainguard-proxy"
         env:
+        - name: REQUIRE_LABEL
+          value: "true"
         - name: SYSTEM_NAMESPACE
           valueFrom:
             fieldRef:
               fieldPath: metadata.namespace
+        - name: KUBERNETES_MIN_VERSION
+          value: "1.21.0"
         - name: POD_IP
           valueFrom:
             fieldRef:

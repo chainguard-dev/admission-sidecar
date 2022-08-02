@@ -10,11 +10,14 @@ import (
 	"fmt"
 	"sync"
 
+	"github.com/chainguard-dev/admission-sidecar/pkg/filter"
 	"github.com/chainguard-dev/admission-sidecar/pkg/proxy"
 
 	admissionv1 "k8s.io/api/admission/v1"
 	v1 "k8s.io/api/admissionregistration/v1"
 	admissionlisters "k8s.io/client-go/listers/admissionregistration/v1"
+	nslisters "k8s.io/client-go/listers/core/v1"
+
 	"knative.dev/pkg/apis"
 	"knative.dev/pkg/controller"
 	"knative.dev/pkg/logging"
@@ -26,7 +29,9 @@ const admitPrefix = "/admit/"
 // Reconciler implements the meta AdmissionController
 type Reconciler struct {
 	webhook.StatelessAdmissionImpl
-	vwhlister admissionlisters.ValidatingWebhookConfigurationLister
+	vwhlister    admissionlisters.ValidatingWebhookConfigurationLister
+	nslister     nslisters.NamespaceLister
+	requireLabel bool
 
 	m         sync.Mutex
 	delegates map[string]*proxy.Delegate
@@ -81,6 +86,19 @@ func (r *Reconciler) Path() string {
 
 // Admit implements webhook.AdmissionController
 func (r *Reconciler) Admit(ctx context.Context, request *admissionv1.AdmissionRequest) *admissionv1.AdmissionResponse {
+	ctx = filter.WithRequireLabel(ctx, r.requireLabel)
+	// Check the namespace for the inclusion label if it's a ns resource
+	if request.Namespace != "" {
+		ns, err := r.nslister.Get(request.Namespace)
+		if err != nil {
+			// TODO(vaikas): Should this then be let through? Seems wonky.
+			return proxy.CreateFailResponse(request.UID, fmt.Sprintf("Failed to get namespace %s %s", request.Namespace, err))
+		}
+		if !filter.ShouldProxy(ctx, ns) {
+			logging.FromContext(ctx).Debugf("Namespace %s not labeled for inclusion, letting through", request.Namespace)
+			return proxy.CreateAllowResponse(request.UID)
+		}
+	}
 	req := apis.GetHTTPRequest(ctx)
 	hook, response := proxy.GetHookName(ctx, admitPrefix, request.UID, req)
 	if response != nil {

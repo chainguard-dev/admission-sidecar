@@ -41,6 +41,13 @@ func CreateFailResponse(uid typesv1.UID, msg string) *admissionv1.AdmissionRespo
 	}
 }
 
+func CreateAllowResponse(uid typesv1.UID) *admissionv1.AdmissionResponse {
+	return &admissionv1.AdmissionResponse{
+		UID:     uid,
+		Allowed: true,
+	}
+}
+
 // WebhookClientConfigToURL normalizes WebhookClientConfig into URL in a string
 // representation.
 func WebhookClientConfigToURLAndCert(wcc v1.WebhookClientConfig) (*Delegate, error) {
