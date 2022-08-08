@@ -1,4 +1,4 @@
-defaultBaseImage: ghcr.io/distroless/alpine-base:latest
+defaultBaseImage: gcr.io/distroless/static:nonroot
 
 builds:
 - id: admission-sidecar
