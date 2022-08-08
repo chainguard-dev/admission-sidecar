@@ -62,7 +62,7 @@ jobs:
 
     - name: Install proxy
       run: |
-        ko apply -BRf ./config/
+        make ko-apply
         kubectl rollout status --timeout 2m --namespace chainguard-proxy deployments/proxy
         sleep 10
 
