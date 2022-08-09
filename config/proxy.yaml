@@ -21,7 +21,7 @@ spec:
       serviceAccountName: chainguard-proxy
       containers:
       - name: controller
-        image: ko://github.com/chainguard-dev/admission-sidecar/cmd/
+        image: ko://github.com/chainguard-dev/admission-sidecar/cmd/admission-sidecar
         resources:
           requests:
             cpu: 50m
