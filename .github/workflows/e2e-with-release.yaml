@@ -1,0 +1,123 @@
+# Copyright 2022 Chainguard, Inc.
+# SPDX-License-Identifier: Apache-2.0
+
+name: Test proxy requests through the admission sidecar
+
+on:
+  pull_request:
+    branches: [ 'main' ]
+
+defaults:
+  run:
+    shell: bash
+
+permissions: read-all
+
+jobs:
+  e2e:
+    name: Proxy e2e test
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        k8s-version:
+        - v1.24.x
+
+    env:
+      KNATIVE_VERSION: "1.5.0"
+      POLICY_CONTROLLER_VERSION: "v0.2.0"
+      KO_DOCKER_REPO: "registry.local:5000/proxy"
+      GO111MODULE: on
+      GOFLAGS: -ldflags=-s -ldflags=-w
+      KOCACHE: ~/ko
+      COSIGN_EXPERIMENTAL: true
+
+    steps:
+    - uses: actions/checkout@2541b1294d2704b0964813337f33b291d3f8596b # v2.4.0
+    - uses: actions/setup-go@84cbf8094393cdc5fe1fe1671ff2647332956b1a # v2.2.0
+      with:
+        go-version: '1.18'
+        check-latest: true
+
+    # will use the latest release available for ko
+    - uses: imjasonh/setup-ko@78eea08f10db87a7a23a666a4a6fe2734f2eeb8d # v0.4
+
+    - uses: imranismail/setup-kustomize@8fa954828ed3cfa7a487a2ba9f7104899bb48b2f # v1.6.1
+
+    - name: Install yq
+      uses: mikefarah/yq@1c7dc0e88aad311c89889bc5ce5d8f96931a1bd0 # v4.25.3
+
+    - name: Setup mirror
+      uses: chainguard-dev/actions/setup-mirror@main
+      with:
+        mirror: mirror.gcr.io
+
+    - uses: chainguard-dev/actions/setup-kind@main
+      with:
+        k8s-version: v1.24.x
+
+    - name: Install policy-controller
+      run: |
+        kubectl apply -f https://github.com/sigstore/policy-controller/releases/download/${{ env.POLICY_CONTROLLER_VERSION }}/policy-controller-${{ env.POLICY_CONTROLLER_VERSION }}.yaml
+
+    - name: Install proxy from release
+      run: |
+        kubectl apply -f https://github.com/chainguard-dev/admission-sidecar/releases/download/v0.0.1-rc.1/release-v0.0.1-rc.1.yaml
+        kubectl rollout status --timeout 2m --namespace chainguard-proxy deployments/proxy
+        sleep 10
+
+    - name: Set up port-forward
+      run: |
+        POD=`kubectl -n chainguard-proxy get pods -oname`
+        kubectl -n chainguard-proxy port-forward $POD 8088:8088 &
+        # Just give port forward little time to start.
+        sleep 5
+        # Make a note of this pod so we don't try to port forward to it again
+        # later.
+        echo "POD=$POD" >> $GITHUB_ENV
+
+    - name: Deploy CIPs
+      run: |
+        kubectl create -f ./test/testdata/cip-static-fail.yaml
+        kubectl create -f ./test/testdata/cip-static-pass.yaml
+        kubectl create -f ./test/testdata/cip-static-pass-fully-qualified.yaml
+        # Allow CIPs to propagate
+        sleep 5
+
+    - name: Create test namespaces and label them appropriately
+      run: |
+        kubectl create ns test-labeled-include
+        kubectl label namespace test-labeled-include proxy.chainguard.dev/include=true
+        kubectl create ns test-labeled-do-not-include
+        kubectl label namespace test-labeled-do-not-include proxy.chainguard.dev/include=false
+        kubectl create ns test-not-labeled
+
+    - name: Run Proxy E2E Tests
+      timeout-minutes: 5
+      run: |
+        go test -count=1 -v -race -tags=e2e ./test/e2e/... --require-label=true
+
+    - name: Then flip the enforcement label requirement to false
+      run: |
+        kubectl -n chainguard-proxy patch deployment proxy --type "json" -p '[{"op":"replace", "path":"/spec/template/spec/containers/0/env/0","value":{"name":"REQUIRE_LABEL","value":"false"}}]'
+        kubectl rollout status --timeout 2m --namespace chainguard-proxy deployments/proxy
+        sleep 5
+
+    - name: Set up port-forward to our new pod
+      run: |
+        # Note that despite the deployment having rolled out, there's still
+        # the old pod hanging around for a bit, so grep it out of here so
+        # that we don't try to port-forward to it again :)
+        POD=`kubectl -n chainguard-proxy get pods -oname | grep -v ${{ env.POD }}`
+        kubectl -n chainguard-proxy port-forward $POD 8089:8088 &
+        # Just give port forward little time to start.
+        sleep 5
+
+    - name: Run Proxy E2E Tests
+      timeout-minutes: 5
+      run: |
+        go test -count=1 -v -race -tags=e2e ./test/e2e/... --url=http://localhost:8089 --require-label=false
+
+    - name: Collect diagnostics
+      if: ${{ failure() }}
+      uses: chainguard-dev/actions/kind-diag@84c993eaf02da1c325854fb272a4df9184bd80fc # main
