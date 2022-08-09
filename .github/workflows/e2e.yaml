@@ -27,7 +27,7 @@ jobs:
 
     env:
       KNATIVE_VERSION: "1.5.0"
-      POLICY_CONTROLLER_VERSION: "v0.2.0"
+      POLICY_CONTROLLER_VERSION: "v0.2.1"
       KO_DOCKER_REPO: "registry.local:5000/proxy"
       GO111MODULE: on
       GOFLAGS: -ldflags=-s -ldflags=-w
