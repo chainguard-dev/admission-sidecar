@@ -29,15 +29,124 @@ label, and resources in all namespaces are handled by the proxy.
 
 # Styra Integration
 
-To patch this into a running OPA system, we add our container into the mix like so. Change this to your own container that you built. TODO(vaikas): Change this to our releases.
+To patch this into a running OPA system, we add our container into the mix like
+so. The patch below shows how to patch in
+[release-v0.0.1-rc.2](https://github.com/chainguard-dev/admission-sidecar/releases/tag/v0.0.1-rc.2)
 
 ```
-kubectl patch statefulset opa -n styra-system --type "json" -p '[{"op":"replace","path":"/spec/template/spec/containers/2","value": {"env":[{"name":"SYSTEM_NAMESPACE","valueFrom":{"fieldRef":{"apiVersion":"v1","fieldPath":"metadata.namespace"}}},{"name":"POD_IP","valueFrom":{"fieldRef":{"apiVersion":"v1","fieldPath":"status.podIP"}}},{"name":"CONFIG_LOGGING_NAME","value":"config-logging"},{"name":"CONFIG_OBSERVABILITY_NAME","value":"config-observability"},{"name":"METRICS_DOMAIN","value":"chainguard.dev/admission-sidecar"}],"image":"gcr.io/vaikas-chainguard/cmd@sha256:b1ac30e0763e5f36c0e40efeb294c1021e6ab08c8e22f1cae3122396eb894e55","imagePullPolicy":"IfNotPresent","livenessProbe":{"failureThreshold":50,"httpGet":{"httpHeaders":[{"name":"k-kubelet-probe","value":"admission-sidecar"}],"path":"/","port":8443,"scheme":"HTTP"},"periodSeconds":1,"successThreshold":1,"timeoutSeconds":1},"name":"controller","ports":[{"containerPort":8443,"name":"http-webhook","protocol":"TCP"}],"readinessProbe":{"failureThreshold":3,"httpGet":{"httpHeaders":[{"name":"k-kubelet-probe","value":"admission-sidecar"}],"path":"/","port":8443,"scheme":"HTTP"},"periodSeconds":1,"successThreshold":1,"timeoutSeconds":1},"resources":{"limits":{"cpu":"1","memory":"1000Mi"},"requests":{"cpu":"50m","memory":"50Mi"}},"securityContext":{"allowPrivilegeEscalation":false,"capabilities":{"drop":["all"]},"readOnlyRootFilesystem":true,"runAsNonRoot":true},"terminationMessagePath":"/dev/termination-log","terminationMessagePolicy":"File"}}]'
+kubectl patch statefulset opa -n styra-system --type "json" -p '[{"op":"add","path":"/spec/template/spec/containers/2","value": {"env":[{"name":"SYSTEM_NAMESPACE","valueFrom":{"fieldRef":{"apiVersion":"v1","fieldPath":"metadata.namespace"}}},{"name":"POD_IP","valueFrom":{"fieldRef":{"apiVersion":"v1","fieldPath":"status.podIP"}}},{"name":"CONFIG_LOGGING_NAME","value":"config-logging"},{"name":"CONFIG_OBSERVABILITY_NAME","value":"config-observability"},{"name":"METRICS_DOMAIN","value":"chainguard.dev/admission-sidecar"}],"image":"ghcr.io/chainguard-dev/admission-sidecar/admission-sidecar:v0.0.1-rc.2","imagePullPolicy":"IfNotPresent","livenessProbe":{"failureThreshold":50,"httpGet":{"httpHeaders":[{"name":"k-kubelet-probe","value":"admission-sidecar"}],"path":"/","port":8088,"scheme":"HTTP"},"periodSeconds":1,"successThreshold":1,"timeoutSeconds":1},"name":"controller","ports":[{"containerPort":8088,"name":"http-webhook","protocol":"TCP"}],"readinessProbe":{"failureThreshold":3,"httpGet":{"httpHeaders":[{"name":"k-kubelet-probe","value":"admission-sidecar"}],"path":"/","port":8088,"scheme":"HTTP"},"periodSeconds":1,"successThreshold":1,"timeoutSeconds":1},"resources":{"limits":{"cpu":"1","memory":"1000Mi"},"requests":{"cpu":"50m","memory":"50Mi"}},"securityContext":{"allowPrivilegeEscalation":false,"capabilities":{"drop":["all"]},"readOnlyRootFilesystem":true,"runAsNonRoot":true},"terminationMessagePath":"/dev/termination-log","terminationMessagePolicy":"File"}}]'
+```
 
+For readability, the patch request is shown here pretty printed:
+```json
+{
+  "op": "add",
+  "path": "/spec/template/spec/containers/2",
+  "value": {
+    "env": [
+      {
+        "name": "SYSTEM_NAMESPACE",
+        "valueFrom": {
+          "fieldRef": {
+            "apiVersion": "v1",
+            "fieldPath": "metadata.namespace"
+          }
+        }
+      },
+      {
+        "name": "POD_IP",
+        "valueFrom": {
+          "fieldRef": {
+            "apiVersion": "v1",
+            "fieldPath": "status.podIP"
+          }
+        }
+      },
+      {
+        "name": "CONFIG_LOGGING_NAME",
+        "value": "config-logging"
+      },
+      {
+        "name": "CONFIG_OBSERVABILITY_NAME",
+        "value": "config-observability"
+      },
+      {
+        "name": "METRICS_DOMAIN",
+        "value": "chainguard.dev/admission-sidecar"
+      }
+    ],
+    "image": "ghcr.io/chainguard-dev/admission-sidecar/admission-sidecar:v0.0.1-rc.2",
+    "imagePullPolicy": "IfNotPresent",
+    "livenessProbe": {
+      "failureThreshold": 50,
+      "httpGet": {
+        "httpHeaders": [
+          {
+            "name": "k-kubelet-probe",
+            "value": "admission-sidecar"
+          }
+        ],
+        "path": "/",
+        "port": 8088,
+        "scheme": "HTTP"
+      },
+      "periodSeconds": 1,
+      "successThreshold": 1,
+      "timeoutSeconds": 1
+    },
+    "name": "controller",
+    "ports": [
+      {
+        "containerPort": 8088,
+        "name": "http-webhook",
+        "protocol": "TCP"
+      }
+    ],
+    "readinessProbe": {
+      "failureThreshold": 3,
+      "httpGet": {
+        "httpHeaders": [
+          {
+            "name": "k-kubelet-probe",
+            "value": "admission-sidecar"
+          }
+        ],
+        "path": "/",
+        "port": 8088,
+        "scheme": "HTTP"
+      },
+      "periodSeconds": 1,
+      "successThreshold": 1,
+      "timeoutSeconds": 1
+    },
+    "resources": {
+      "limits": {
+        "cpu": "1",
+        "memory": "1000Mi"
+      },
+      "requests": {
+        "cpu": "50m",
+        "memory": "50Mi"
+      }
+    },
+    "securityContext": {
+      "allowPrivilegeEscalation": false,
+      "capabilities": {
+        "drop": [
+          "all"
+        ]
+      },
+      "readOnlyRootFilesystem": true,
+      "runAsNonRoot": true
+    },
+    "terminationMessagePath": "/dev/termination-log",
+    "terminationMessagePolicy": "File"
+  }
+}
 ```
 
 
-# Then for the Styra you can add a Validating Rule that looks like this:
+# Then for Styra you can add a Validating Rule that looks like this:
 
 ```
 package policy["com.styra.kubernetes.validating"].rules.rules

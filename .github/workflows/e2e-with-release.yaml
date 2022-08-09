@@ -1,7 +1,7 @@
 # Copyright 2022 Chainguard, Inc.
 # SPDX-License-Identifier: Apache-2.0
 
-name: Test proxy requests through the admission sidecar
+name: Test proxy requests through the admission sidecar using release
 
 on:
   pull_request:
@@ -15,7 +15,7 @@ permissions: read-all
 
 jobs:
   e2e:
-    name: Proxy e2e test
+    name: Proxy e2e test using release
     runs-on: ubuntu-latest
 
     strategy:
@@ -65,9 +65,9 @@ jobs:
         sleep 5
         kubectl wait pods -n cosign-system --for condition=Ready --timeout=90s --all
 
-    - name: Install proxy
+    - name: Install proxy from release
       run: |
-        make ko-apply
+        kubectl apply -f https://github.com/chainguard-dev/admission-sidecar/releases/download/v0.0.1-rc.2/release-v0.0.1-rc.2.yaml
         kubectl rollout status --timeout 2m --namespace chainguard-proxy deployments/proxy
         sleep 10
 
