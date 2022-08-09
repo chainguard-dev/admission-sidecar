@@ -67,7 +67,7 @@ jobs:
 
     - name: Install proxy from release
       run: |
-        kubectl apply -f https://github.com/chainguard-dev/admission-sidecar/releases/download/v0.0.1-rc.1/release-v0.0.1-rc.1.yaml
+        kubectl apply -f https://github.com/chainguard-dev/admission-sidecar/releases/download/v0.0.1-rc.2/release-v0.0.1-rc.2.yaml
         kubectl rollout status --timeout 2m --namespace chainguard-proxy deployments/proxy
         sleep 10
 
