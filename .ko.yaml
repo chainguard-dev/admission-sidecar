@@ -3,7 +3,7 @@ defaultBaseImage: ghcr.io/distroless/static:latest
 builds:
 - id: admission-sidecar
   dir: .
-  main: ./cmd
+  main: ./cmd/admission-sidecar
   env:
   - CGO_ENABLED=0
   flags:

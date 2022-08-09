@@ -1,12 +1,12 @@
 GIT_TAG ?= $(shell git describe --tags --always --dirty)
 GIT_HASH ?= $(shell git rev-parse HEAD)
-LDFLAGS=""
+LDFLAGS=
 
 KO_DOCKER_REPO ?= ghcr.io/chainguard-dev/admission-sidecar
 
 .PHONY: ko-resolve
 ko-resolve:
-	LDFLAGS="$(LDFLAGS)" \
+	LDFLAGS="$(LDFLAGS)" KO_DOCKER_REPO=$(KO_DOCKER_REPO) \
 	ko resolve --tags $(GIT_TAG),latest --base-import-paths --recursive \
 	--filename ./config --platform=all \
 	--image-refs imagerefs > release-$(GIT_TAG).yaml
