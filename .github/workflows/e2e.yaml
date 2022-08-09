@@ -61,6 +61,9 @@ jobs:
     - name: Install policy-controller
       run: |
         kubectl apply -f https://github.com/sigstore/policy-controller/releases/download/${{ env.POLICY_CONTROLLER_VERSION }}/policy-controller-${{ env.POLICY_CONTROLLER_VERSION }}.yaml
+        # Wait little bit before waiting for the pods to get created
+        sleep 5
+        kubectl wait pods -n cosign-system --for condition=Ready --timeout=90s --all
 
     - name: Install proxy
       run: |
