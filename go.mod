@@ -4,7 +4,7 @@ go 1.20
 
 require (
 	github.com/kelseyhightower/envconfig v1.4.0
-	k8s.io/api v0.26.5
+	k8s.io/api v0.27.3
 	k8s.io/apimachinery v0.27.3
 	k8s.io/client-go v0.26.5
 	knative.dev/pkg v0.0.0-20230710013638-5ef4812a4fe9
