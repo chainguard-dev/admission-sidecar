@@ -1,0 +1,37 @@
+---
+linters:
+  enable:
+    - asciicheck
+    - unused
+    - errcheck
+    - errorlint
+    - forbidigo
+    - gofmt
+    - goimports
+    - gosec
+    - gocritic
+    - importas
+    - prealloc
+    - revive
+    - misspell
+    - stylecheck
+    - tparallel
+    - unconvert
+    - unparam
+    - whitespace
+output:
+  uniq-by-line: false
+issues:
+  exclude-rules:
+    - path: _test\.go
+      linters:
+        - errcheck
+        - gosec
+        # We want to allow using os.Getenv and os.Setenv in tests because it
+        # might be easier (and needed in some cases)
+        - forbidigo
+  max-issues-per-linter: 0
+  max-same-issues: 0
+run:
+  issues-exit-code: 1
+  timeout: 10m

@@ -110,6 +110,6 @@ func (r *Reconciler) Admit(ctx context.Context, request *admissionv1.AdmissionRe
 		return proxy.CreateFailResponse(request.UID, fmt.Sprintf("No handler found for %s %s", req.URL.Path, hook))
 	}
 	logging.FromContext(ctx).Errorf("Doing a proxy request to delegate %s : %s", hook, delegate.Service)
-	//return proxy.DoRequest(ctx, *delegate, request.UID, req.Body)
+	// return proxy.DoRequest(ctx, *delegate, request.UID, req.Body)
 	return proxy.DoRequest(ctx, *delegate, request)
 }
