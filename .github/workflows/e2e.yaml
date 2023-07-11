@@ -28,7 +28,7 @@ jobs:
         - 1.26.x
 
     env:
-      KNATIVE_VERSION: "1.10.0"
+      KNATIVE_VERSION: "1.10.1"
       POLICY_CONTROLLER_VERSION: "v0.8.0"
       KO_DOCKER_REPO: "registry.local:5000/proxy"
       GO111MODULE: on
