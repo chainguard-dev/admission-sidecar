@@ -35,7 +35,7 @@ jobs:
       uses: sigstore/cosign-installer@09a077b27eb1310dcfb21981bee195b30ce09de0 # v2
 
     - name: Install GoReleaser
-      uses: goreleaser/goreleaser-action@68acf3b1adf004ac9c2f0a4259e85c5f66e99bef # v3.0.0
+      uses: goreleaser/goreleaser-action@336e29918d653399e599bfca99fadc1d7ffbc9f7 # v4.3.0
       with:
         install-only: true
 
