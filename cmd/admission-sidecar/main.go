@@ -42,7 +42,7 @@ func main() {
 	logging.FromContext(ctx).Infof("Enforcing only on labeled namespaces: %v", ec.RequireLabel)
 	logging.FromContext(ctx).Infof("Starting to listen on %d", ec.Port)
 	sharedmain.MainWithConfig(ctx, "admission-sidecar", cfg,
-		//NewValidationAdmissionController,
+		// NewValidationAdmissionController,
 		mutating.NewController,
 		// Controller
 		validating.NewController,

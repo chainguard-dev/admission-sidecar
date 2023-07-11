@@ -20,7 +20,7 @@ import (
 
 const queueName = "ProxyAdmissionWebhook"
 
-func NewController(ctx context.Context, cmw configmap.Watcher) *controller.Impl {
+func NewController(ctx context.Context, _ configmap.Watcher) *controller.Impl {
 	vwhInformer := vwhinformer.Get(ctx)
 	nsInformer := nsinformer.Get(ctx)
 	r := &Reconciler{
@@ -34,6 +34,6 @@ func NewController(ctx context.Context, cmw configmap.Watcher) *controller.Impl 
 		WorkQueueName: queueName,
 		Logger:        logging.FromContext(ctx).Named(queueName),
 	})
-	vwhInformer.Informer().AddEventHandler(controller.HandleAll(impl.Enqueue))
+	_, _ = vwhInformer.Informer().AddEventHandler(controller.HandleAll(impl.Enqueue))
 	return impl
 }

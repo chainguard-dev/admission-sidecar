@@ -56,7 +56,7 @@ func WebhookClientConfigToURLAndCert(wcc v1.WebhookClientConfig) (*Delegate, err
 	if len(wcc.CABundle) > 0 {
 		caCertPool = x509.NewCertPool()
 		if !caCertPool.AppendCertsFromPEM(wcc.CABundle) {
-			return nil, fmt.Errorf("Failed to parse certs from CABundle")
+			return nil, fmt.Errorf("failed to parse certs from CABundle")
 		}
 		ret.CACertPool = caCertPool
 	}
@@ -89,7 +89,6 @@ func GetHookName(ctx context.Context, prefix string, uid typesv1.UID, req *http.
 	if !strings.HasPrefix(req.URL.Path, prefix) {
 		logging.FromContext(ctx).Errorf("path prefix not found for %s in %s", prefix, req.URL.Path)
 		return "", CreateFailResponse(uid, fmt.Sprintf("Invalid prefix in %s, wanted %s", req.URL.Path, prefix))
-
 	}
 	return strings.TrimPrefix(req.URL.Path, prefix), nil
 }
@@ -106,7 +105,10 @@ func DoRequest(ctx context.Context, delegate Delegate, request *admissionv1.Admi
 	// we use container root CA.
 	client := &http.Client{
 		Transport: &http.Transport{
-			TLSClientConfig: &tls.Config{RootCAs: delegate.CACertPool},
+			TLSClientConfig: &tls.Config{
+				RootCAs:    delegate.CACertPool,
+				MinVersion: tls.VersionTLS12,
+			},
 		},
 	}
 
